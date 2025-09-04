@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Controller/SearchController.dart';
-import 'package:get/get.dart';
  
-class Searchbar extends StatelessWidget {
-  const Searchbar({super.key});
+import 'package:get/get.dart';
+
+class Searchbar extends StatefulWidget {
+ 
+  final FocusNode searchFocusNode;
+  const Searchbar({super.key, required this.searchFocusNode});
 
   @override
+  State<Searchbar> createState() => _SearchbarState();
+}
+
+class _SearchbarState extends State<Searchbar> {
+ 
+  @override
   Widget build(BuildContext context) {
-   
     final SearchBarController searchController = Get.put(SearchBarController());
 
-    return FractionallySizedBox( // <-- أضف FractionallySizedBox هنا
-      widthFactor: 0.8, // سيشغل 80% من العرض المتاح لأبيه
+ 
+    return FractionallySizedBox(
+      widthFactor: 0.8,
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -25,21 +34,28 @@ class Searchbar extends StatelessWidget {
           ],
         ),
         child: TextField(
+          textAlign: TextAlign.right,
           controller: searchController.textEditingController,
+          focusNode: widget.searchFocusNode, // Use the passed FocusNode
           textDirection: TextDirection.rtl,
           decoration: InputDecoration(
-            hintText: 'ابحث عن منتج أو خدمة...',
+            hintText: 'ابحث عن منتج',
             hintStyle: TextStyle(color: Colors.grey[500]),
-            prefixIcon: Icon(Icons.search, color: Colors.blue[700], size: 28),
-            suffixIcon: Obx(() =>
-                searchController.searchText.value.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey[500]),
-                        onPressed: () {
-                          searchController.clearSearch();
-                        },
-                      )
-                    : const SizedBox.shrink()
+            prefixIcon: Icon(
+              Icons.search,
+              color: Colors.blue[700],
+              size: 28,
+            ),
+            suffixIcon: Obx(
+              () => searchController.searchText.value.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, color: Colors.grey[500]),
+                      onPressed: () {
+                        searchController.clearSearch();
+                        // No need to unfocus here, Home will manage that
+                      },
+                    )
+                  : const SizedBox.shrink(),
             ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 15),

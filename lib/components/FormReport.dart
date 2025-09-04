@@ -1,118 +1,66 @@
+// view/FormReport.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Controller/ReportController.dart';
-import 'package:get/get.dart';
- 
+
 class FormReport extends StatelessWidget {
-  const FormReport({super.key});
+  // You might pass data to the report form, e.g., the product item
+  final Map<String, dynamic>? productItem;
+
+  const FormReport({Key? key, this.productItem}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    
-    final ReportController controller = Get.put(ReportController());
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('الإبلاغ عن منتج غير شرعي'),
+        title: const Text('بلاغ جديد'),
         centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: controller.reportFormKey, // ربط المفتاح من الـ Controller
-          child: ListView(
-            children: [
-              // حقل اسم المحل
-              TextFormField(
-                initialValue: controller.shopName.value, // ربط القيمة الابتدائية بالـ Rx
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.right,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المحل',
-                  hintText: 'أدخل اسم المحل',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.store),
-                ),
-                onChanged: controller.updateShopName, // تحديث الـ RxString عند التغيير
-                validator: controller.validateShopName, // استخدام دالة التحقق من الـ Controller
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'تقديم بلاغ عن: ${productItem?['name_product'] ?? 'منتج غير محدد'}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 20),
+            // Here you would add your form fields
+            // Example:
+            const TextField(
+              decoration: InputDecoration(
+                labelText: 'موضوع البلاغ',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: 16),
-
-              // حقل اسم المبلغ (اختياري)
-              TextFormField(
-                initialValue: controller.reporterName.value,
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.right,
-                decoration: const InputDecoration(
-                  labelText: 'اسم المبلغ (اختياري)',
-                  hintText: 'أدخل اسمك',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-                onChanged: controller.updateReporterName,
-                // هذا الحقل اختياري، لذا لا يوجد validator
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 10),
+            const TextField(
+              maxLines: 5,
+              decoration: InputDecoration(
+                labelText: 'تفاصيل البلاغ',
+                border: OutlineInputBorder(),
+                alignLabelWithHint: true,
               ),
-              const SizedBox(height: 16),
-
-              // حقل نوع البلاغ (Dropdown)
-              Obx( // استخدم Obx لمراقبة selectedReportType
-                () => DropdownButtonFormField<String>(
-                  value: controller.selectedReportType.value,
-                  decoration: const InputDecoration(
-                    labelText: 'نوع البلاغ',
-                    hintText: 'اختر نوع البلاغ',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.category),
-                  ),
-                  items: controller.reportTypes.map((String type) {
-                    return DropdownMenuItem<String>(
-                      value: type,
-                      child: Text(type),
-                    );
-                  }).toList(),
-                  onChanged: controller.updateSelectedReportType, // تحديث الـ Rx<String?>
-                  validator: controller.validateReportType,
-                ),
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Logic to submit the report
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('تم إرسال البلاغ بنجاح!')),
+                );
+                Navigator.of(context).pop(); // Go back after submitting
+              },
+              child: const Text('إرسال البلاغ'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50), // Make button full width
               ),
-              const SizedBox(height: 16),
-
-              // حقل موقع المحل
-              TextFormField(
-                initialValue: controller.shopLocation.value,
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.right,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'موقع المحل',
-                  hintText: 'أدخل العنوان بالتفصيل أو وصف الموقع',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.location_on),
-                ),
-                onChanged: controller.updateShopLocation,
-                validator: controller.validateShopLocation,
-              ),
-              const SizedBox(height: 24),
-
-              // زر إرسال البلاغ
-              ElevatedButton.icon(
-                onPressed: controller.submitReport, // استدعاء دالة الإرسال من الـ Controller
-                icon: const Icon(Icons.send),
-                label: const Text(
-                  'إرسال البلاغ',
-                  style: TextStyle(fontSize: 18),
-                ),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
-
- 
