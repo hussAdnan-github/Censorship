@@ -1,34 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Controller/AdvertisementController.dart';
-import 'package:flutter_application_1/Controller/merchantController.dart';
+import 'package:flutter_application_1/Controller/GenericPaginationController.dart';
+import 'package:flutter_application_1/Service/serviceApi.dart';
 import 'package:flutter_application_1/components/CardBest.dart';
+import 'package:flutter_application_1/model/Merchant.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';  
+import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../Controller/SliderController.dart';
 
 class Best extends StatelessWidget {
-  final List<Map<String, String>> sliderItems = [
-    {
-      'image': 'assets/images/about.png',
-      'text': 'تخفيضات مذهلة على الكتب والمستلزمات الدراسية',
-    },
-    {
-      'image': 'assets/images/best-seller.png',
-      'text': 'أفضل العروض الحصرية على المنتجات الأكثر مبيعاً الآن!',
-    },
-    {
-      'image': 'assets/images/search-document.png',
-      'text': 'خصومات كبرى على جميع الأدوات المكتبية والقرطاسية',
-    },
-    {
-      'image': 'assets/images/qr.png',
-      'text': 'امسح الكود واحصل على عرض خاص ومفاجآت حصرية!',
-    },
-  ];
-
   Best({super.key});
-   Future<void> _launchUrl(String urlString) async {
+
+  Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       throw 'Could not launch $urlString';
@@ -37,15 +21,22 @@ class Best extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final MerchantController Mrchant = Get.put(MerchantController());
-    final AdvertisementController Advertisements = Get.put(
+    final merchantsController = Get.put(
+      GenericPaginationController<Merchant>(
+        fetchFunction: ({page}) => ApiService.fetchMerchants(page: page),
+      ),
+    );
+
+    final AdvertisementController advertisements = Get.put(
       AdvertisementController(),
     );
 
-    final SliderController sliderController = Get.put(
-      SliderController(sliderItems.length),
-    );
+    final SliderController sliderController = Get.put(SliderController(0));
     final PageController pageController = PageController();
+
+    ever(advertisements.advertisement, (_) {
+      sliderController.updateLength(advertisements.advertisement.length);
+    });
 
     ever(sliderController.currentPage, (int page) {
       if (pageController.hasClients && pageController.page!.round() != page) {
@@ -64,7 +55,7 @@ class Best extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
+            const DrawerHeader(
               decoration: BoxDecoration(color: Color(0xFF1976D2)),
               child: Text(
                 'القائمة',
@@ -72,16 +63,16 @@ class Best extends StatelessWidget {
               ),
             ),
             ListTile(
-              leading: Icon(Icons.home),
-              title: Text('الرئيسية'),
+              leading: const Icon(Icons.home),
+              title: const Text('الرئيسية'),
               onTap: () {
                 Navigator.of(context).pop();
               },
             ),
-            // يمكنك إضافة عناصر أخرى هنا
           ],
         ),
       ),
+
       appBar: AppBar(
         title: const Text(
           'المحلات المميزة',
@@ -91,13 +82,9 @@ class Best extends StatelessWidget {
             fontSize: 22,
           ),
         ),
-        backgroundColor: const Color(
-          0xFF1976D2,
-        ), // أزرق أعمق وأكثر حيوية (Material Blue 700)
+        backgroundColor: const Color(0xFF1976D2),
         centerTitle: true,
-
-        elevation: 0, // إزالة الظل من الـ AppBar
-
+        elevation: 0,
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -113,7 +100,8 @@ class Best extends StatelessWidget {
 
       body: Column(
         children: [
-           Container(
+          // سلايدر الإعلانات
+          Container(
             height: 320,
             decoration: BoxDecoration(
               color: const Color(0xFF1976D2),
@@ -130,26 +118,28 @@ class Best extends StatelessWidget {
               ],
             ),
             child: Obx(() {
-              if (Advertisements.isLoading.value) {
+              if (advertisements.isLoading.value) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (Advertisements.errorMessage.isNotEmpty) {
+              if (advertisements.errorMessage.isNotEmpty) {
                 return Center(
-                  child: Text("خطأ: ${Advertisements.errorMessage}"),
+                  child: Text("خطأ: ${advertisements.errorMessage}"),
                 );
               }
-              if (Advertisements.advertisement.isEmpty) {
+              if (advertisements.advertisement.isEmpty) {
                 return const Center(child: Text("لا توجد إعلانات"));
               }
+
+              final ads = advertisements.advertisement;
 
               return Column(
                 children: [
                   Expanded(
                     child: PageView.builder(
                       controller: pageController,
-                      itemCount: Advertisements.advertisement.length,
+                      itemCount: ads.length,
                       itemBuilder: (context, index) {
-                        final ad = Advertisements.advertisement[index];
+                        final ad = ads[index];
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20.0,
@@ -183,122 +173,36 @@ class Best extends StatelessWidget {
                                     ),
                                   ),
                                 const SizedBox(height: 15),
-
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 15.0,
                                   ),
-                                  child: Column(
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          // أيقونة الواتساب
-                                          if (ad.whatsapp != null &&
-                                              ad.whatsapp!.isNotEmpty)
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    Colors.green, // لون الخلفية
-                                                borderRadius: BorderRadius.circular(
-                                                  50,
-                                                ), // لجعل الأيقونة دائرية بالكامل
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    spreadRadius: 1,
-                                                    blurRadius: 3,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: IconButton(
-                                                icon: const FaIcon(
-                                                  FontAwesomeIcons.whatsapp,
-                                                  color: Color.fromARGB(
-                                                    255,
-                                                    255,
-                                                    255,
-                                                    255,
-                                                  ),  
-                                                  size: 24,  
-                                                ),
-                                                onPressed: () =>
-                                                    _launchUrl(ad.whatsapp!),
-                                              ),
-                                            ),
-
-                                          const SizedBox(width: 15),
-                                           if (ad.facebook != null &&
-                                              ad.facebook!.isNotEmpty)
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFF1877F2),
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    spreadRadius: 1,
-                                                    blurRadius: 3,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: IconButton(
-                                                icon: const FaIcon(
-                                                  FontAwesomeIcons.facebook,
-                                                  color: Color.fromARGB(
-                                                    255,
-                                                    255,
-                                                    255,
-                                                    255,
-                                                  ),  
-                                                  size: 24,  
-                                                ),
-                                                onPressed: () =>
-                                                    _launchUrl(ad.facebook!),
-                                              ),
-                                            ),
-                                          const SizedBox(width: 15),
-                                           if (ad.instagram != null &&
-                                              ad.instagram!.isNotEmpty)
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Colors.pink,
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    spreadRadius: 1,
-                                                    blurRadius: 3,
-                                                    offset: const Offset(0, 2),
-                                                  ),
-                                                ],
-                                              ),
-                                              child: IconButton(
-                                                icon: const FaIcon(
-                                                  FontAwesomeIcons.instagram,
-                                                  color: Color.fromARGB(
-                                                    255,
-                                                    255,
-                                                    255,
-                                                    255,
-                                                  ),  
-                                                  size:
-                                                      24,  
-                                                ),
-                                                onPressed: () =>
-                                                    _launchUrl(ad.instagram!),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                      if (ad.whatsapp != null &&
+                                          ad.whatsapp.isNotEmpty)
+                                        _buildSocialIcon(
+                                          color: Colors.green,
+                                          icon: FontAwesomeIcons.whatsapp,
+                                          url: ad.whatsapp,
+                                        ),
+                                      const SizedBox(width: 15),
+                                      if (ad.facebook != null &&
+                                          ad.facebook.isNotEmpty)
+                                        _buildSocialIcon(
+                                          color: const Color(0xFF1877F2),
+                                          icon: FontAwesomeIcons.facebook,
+                                          url: ad.facebook,
+                                        ),
+                                      const SizedBox(width: 15),
+                                      if (ad.instagram != null &&
+                                          ad.instagram.isNotEmpty)
+                                        _buildSocialIcon(
+                                          color: Colors.pink,
+                                          icon: FontAwesomeIcons.instagram,
+                                          url: ad.instagram,
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -317,26 +221,24 @@ class Best extends StatelessWidget {
                     child: Obx(
                       () => Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          Advertisements.advertisement.length,
-                          (index) {
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: sliderController.currentPage.value == index
-                                  ? 24
-                                  : 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(5),
-                                color:
-                                    sliderController.currentPage.value == index
-                                    ? const Color(0xFFE65100)
-                                    : Colors.white.withOpacity(0.7),
-                              ),
-                            );
-                          },
-                        ),
+                        children: List.generate(sliderController.length.value, (
+                          index,
+                        ) {
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: sliderController.currentPage.value == index
+                                ? 24
+                                : 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                              color: sliderController.currentPage.value == index
+                                  ? const Color(0xFFE65100)
+                                  : Colors.white.withOpacity(0.7),
+                            ),
+                          );
+                        }),
                       ),
                     ),
                   ),
@@ -345,46 +247,37 @@ class Best extends StatelessWidget {
             }),
           ),
 
-          const SizedBox(height: 25),  
+          const SizedBox(height: 25),
 
-                    Expanded(
+          // قائمة المحلات
+          Expanded(
             child: Obx(() {
-              // حالة التحميل الأولي
-              if (Mrchant.isLoading.value) {
+              if (merchantsController.isLoading.value) {
                 return const Center(child: CircularProgressIndicator());
               }
-              // حالة وجود خطأ
-              if (Mrchant.errorMessage.isNotEmpty) {
-                return Center(child: Text("خطأ: ${Mrchant.errorMessage}"));
+              if (merchantsController.errorMessage.isNotEmpty) {
+                return Center(
+                  child: Text("خطأ: ${merchantsController.errorMessage}"),
+                );
               }
-              // حالة عدم وجود بيانات إطلاقاً
-              if (Mrchant.merchants.isEmpty) {
+              if (merchantsController.items.isEmpty) {
                 return const Center(child: Text("لا توجد بيانات"));
               }
 
-              // بناء القائمة مع دعم الـ Pagination
               return ListView.builder(
-                // 1. ربط الـ ScrollController
-                controller: Mrchant.scrollController, 
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                
-                // 2. تعديل عدد العناصر
-                // العدد هو عدد التجار + 1 إذا كان هناك المزيد من البيانات (لعرض مؤشر التحميل)
-                itemCount: Mrchant.merchants.length + (Mrchant.hasMore.value ? 1 : 0),
-
+                controller: merchantsController.scrollController,
+                itemCount:
+                    merchantsController.items.length +
+                    (merchantsController.hasMore.value ? 1 : 0),
                 itemBuilder: (context, index) {
-                  // 3. التحقق إذا كان هذا هو العنصر الأخير
-                  // إذا كان index يساوي طول القائمة، فهذا يعني أنه العنصر الإضافي
-                  if (index == Mrchant.merchants.length) {
-                    // عرض مؤشر التحميل في الأسفل
+                  if (index == merchantsController.items.length) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16.0),
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
 
-                  // بناء عنصر القائمة العادي
-                  final merchant = Mrchant.merchants[index];
+                  final merchant = merchantsController.items[index];
                   return Cardbest(
                     image: merchant.image,
                     namePlace: merchant.namePlace,
@@ -399,5 +292,29 @@ class Best extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildSocialIcon({
+    required Color color,
+    required IconData icon,
+    required String url,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(50),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: FaIcon(icon, color: Colors.white, size: 24),
+        onPressed: () => _launchUrl(url),
+      ),
+    );
+  }
 }
- 

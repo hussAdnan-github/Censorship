@@ -1,5 +1,4 @@
-// components/Cardresultssearch.dart
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/FormReport.dart';
  
 class Cardresultssearch extends StatelessWidget {

@@ -3,32 +3,47 @@ import 'dart:async';
 
 class SliderController extends GetxController {
   RxInt currentPage = 0.obs;
-  final int imageCount;
-  late Timer _timer;
+  RxInt length = 0.obs; // عدد العناصر ديناميكي
+  Timer? _timer;
   Function(int)? animateToPage;
 
-  SliderController(this.imageCount);
-
-  get length => null;
+  SliderController(int initialLength) {
+    length.value = initialLength;
+  }
 
   @override
   void onInit() {
     super.onInit();
-    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
-      if (currentPage.value == imageCount - 1) {
-        if (animateToPage != null) {
-          animateToPage!(0);
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _timer?.cancel();
+    if (length.value > 0) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        if (currentPage.value >= length.value - 1) {
+          // رجع لأول عنصر
+          animateToPage?.call(0);
+          currentPage.value = 0;
+        } else {
+          currentPage.value++;
+          animateToPage?.call(currentPage.value);
         }
-        currentPage.value = 0;
-      } else {
-        currentPage.value++;
-      }
-    });
+      });
+    }
+  }
+
+  void updateLength(int newLength) {
+    length.value = newLength;
+    if (currentPage.value >= newLength) {
+      currentPage.value = 0;
+    }
+    _startAutoSlide(); // أعد تشغيل التايمر مع العدد الجديد
   }
 
   @override
   void onClose() {
-    _timer.cancel();
+    _timer?.cancel();
     super.onClose();
   }
 }
