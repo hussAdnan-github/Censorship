@@ -27,10 +27,31 @@ class NewsCard extends StatelessWidget {
           return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
-                title: const Text("جارٍ تنزيل الملف..."),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                title: const Text(
+                  "جارٍ تنزيل الملف...",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: [const SizedBox(height: 16)],
+                  children: const [
+                    SizedBox(height: 16),
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      "الرجاء الانتظار حتى يكتمل التنزيل",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                    ),
+                  ],
                 ),
               );
             },
@@ -43,7 +64,7 @@ class NewsCard extends StatelessWidget {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("تم تنزيل الملف وفتحه بنجاح!")));
+      ).showSnackBar(SnackBar(content: Text("تم تنزيل الملف بنجاح!")));
     } catch (e) {
       Navigator.of(context).pop(); // إغلاق أي Dialog مفتوح
       ScaffoldMessenger.of(
@@ -75,6 +96,60 @@ class NewsCard extends StatelessWidget {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
+            InkWell(
+              onTap: pdfUrl.isEmpty
+                  ? null
+                  : () => _downloadPdf(
+                      context,
+                    ), // تعطيل الضغط إذا كان pdfUrl فارغ
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: pdfUrl.isEmpty
+                      ? Colors.grey.withOpacity(0.4) // لون للـ disabled
+                      : const Color.fromARGB(255, 72, 255, 0).withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.download,
+                  color: pdfUrl.isEmpty ? Colors.grey[300] : Colors.white,
+                  size: 28,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Directionality(
+                textDirection: TextDirection.rtl,
+
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      date,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(width: 24),
+
             Container(
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.3),
@@ -85,43 +160,6 @@ class NewsCard extends StatelessWidget {
                 Icons.article_outlined,
                 color: Colors.white,
                 size: 40,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    date,
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-            InkWell(
-              onTap: () => _downloadPdf(context),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 72, 255, 0).withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.download,
-                  color: Colors.white,
-                  size: 28,
-                ),
               ),
             ),
           ],

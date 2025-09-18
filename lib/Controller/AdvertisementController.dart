@@ -9,12 +9,12 @@ class AdvertisementController extends GetxController {
 
   @override
   void onInit() {
-    fetchMerchants();
-
+    fetchAdvertisement();
+ 
     super.onInit();
   }
 
-  void fetchMerchants() async {
+  void fetchAdvertisement() async {
     try {
       isLoading(true);
       errorMessage('');

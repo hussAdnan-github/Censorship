@@ -6,3 +6,4 @@ class ApiEndpoints {
   static const String bulletins = "$baseUrl/bulletins/days/";
   static const String advertisements = "$baseUrl/advertisements/advertisements/";
 }
+ 

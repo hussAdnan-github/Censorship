@@ -55,11 +55,7 @@ class ScannController extends GetxController {
               data['data']['results'],
             );
 
-            // حفظ النتائج في SQLite للتصفح بدون إنترنت
-            await DBHelper().deleteAll();
-            for (var item in resultsSanner) {
-              await DBHelper().insertBulletin(item);
-            }
+            
           } else {
             resultsSanner.clear();
           }

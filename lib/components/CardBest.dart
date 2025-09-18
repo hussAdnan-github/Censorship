@@ -49,46 +49,82 @@ class Cardbest extends StatelessWidget {
                   ),
 
             SizedBox(width: 16),
+        
+        
+        
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    nameMerchant.toString(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
+              child: Directionality(
+                  textDirection: TextDirection.rtl,
+
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      nameMerchant.toString(),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue[700],
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'القــــسم: ${nameDepartment}',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Icon(Icons.location_on, color: Colors.blue, size: 18),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          namePlace.toString(),
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey[600],
+                    SizedBox(height: 6),
+                    Text(
+                      'القــــسم: ${nameDepartment}',
+                      style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                    ),
+                    SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Icon(Icons.location_on, color: Colors.blue, size: 18),
+                        SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            namePlace.toString(),
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
+        
+        
           ],
         ),
       ),
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

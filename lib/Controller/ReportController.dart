@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ReportController extends GetxController {
-  // GlobalKey للتحكم في حالة الفورم والتحقق من صحته
-  final GlobalKey<FormState> reportFormKey = GlobalKey<FormState>();
-
-  // RxStrings لمراقبة قيم حقول النص والقائمة المنسدلة
-  // نستخدم .obs لجعلها قابلة للمراقبة (reactive)
+   final GlobalKey<FormState> reportFormKey = GlobalKey<FormState>();
+ 
   final shopName = ''.obs;
-  final reporterName = ''.obs; // اختياري
+  final reporterName = ''.obs;  
   final shopLocation = ''.obs;
-  final selectedReportType = Rx<String?>(null); // يمكن أن تكون null في البداية
+  final selectedReportType = Rx<String?>(null);  
 
-  // خيارات القائمة المنسدلة
-  final List<String> reportTypes = [
+   final List<String> reportTypes = [
     'منتج مقلد',
     'منتج منتهي الصلاحية',
     'منتج غير مرخص',
@@ -84,7 +80,7 @@ class ReportController extends GetxController {
       Future.delayed(const Duration(seconds: 2), () {
         // بعد الإرسال، يمكنك مسح الحقول أو إظهار رسالة نجاح
         // مسح الحقول
-        shopName.value = '';
+        shopName.value = ''; 
         reporterName.value = '';
         shopLocation.value = '';
         selectedReportType.value = null;

@@ -7,27 +7,39 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class FormReportController extends GetxController {
-  // Controllers للنصوص
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final merchantController = TextEditingController();
   final contentController = TextEditingController();
   final priceController = TextEditingController();
   final productNameController = TextEditingController();
-   var isSubmitting = false.obs; // حالة تحميل عند الإرسال
+  final nameStoreController = TextEditingController();
+  final locationController = TextEditingController();
+  var isSubmitting = false.obs;
 
   var isLoadingM = false.obs;
   Timer? _debounce;
 
-  // Dropdown
   var reportType = RxnInt();
-  // FormKey
-  final formKey = GlobalKey<FormState>();
-  final RxList<String> merchantSuggestions = <String>[].obs;
 
-  // Validation لكل حقل
+  final formKey = GlobalKey<FormState>();
+  var merchantResults = <Map<String, dynamic>>[].obs;
+  final RxList<String> merchantSuggestions = <String>[].obs;
+  var selectedMerchantId = RxnInt(); // id التاجر المحدد
+
   String? validateName(String? value) {
     if (value == null || value.isEmpty) return 'الرجاء إدخال اسم مقدم البلاغ';
+    return null;
+  }
+
+  String? validatenameStore(String? value) {
+    if (value == null || value.isEmpty)
+      return 'الرجاء إدخال أسـم المـحل ( المسجل في الوحة )';
+    return null;
+  }
+
+  String? validatelocation(String? value) {
+    if (value == null || value.isEmpty) return 'مـوقع المـحل ( العنوان كاملا )';
     return null;
   }
 
@@ -35,15 +47,15 @@ class FormReportController extends GetxController {
     if (value == null || value.isEmpty) {
       return 'الرجاء إدخال رقم الهاتف';
     }
-    // تحقق أن الرقم يحتوي على 9 أرقام فقط
+
     if (!RegExp(r'^[0-9]{9}$').hasMatch(value)) {
       return 'رقم الهاتف يجب أن يكون 9 أرقام';
     }
-    // تحقق أن الرقم يبدأ بالرقم 7
+
     if (!value.startsWith('7')) {
       return 'رقم الهاتف يجب أن يبدأ بالرقم 7';
     }
-    return null; // صالح
+    return null;
   }
 
   String? validateMerchant(String? value) {
@@ -67,13 +79,11 @@ class FormReportController extends GetxController {
     return null;
   }
 
-  // Validation لاسم المنتج
   String? validateProductName(String? value) {
     if (value == null || value.isEmpty) return 'الرجاء إدخال اسم المنتج';
     return null;
   }
 
-  // البحث في API
   void searchMerchant(String query) async {
     if (query.isEmpty) {
       merchantSuggestions.clear();
@@ -81,7 +91,7 @@ class FormReportController extends GetxController {
       return;
     }
 
-    if (query.length <= 5) {
+    if (query.length <= 3) {
       merchantSuggestions.clear();
       return;
     }
@@ -99,11 +109,15 @@ class FormReportController extends GetxController {
           final Map<String, dynamic> jsonData = jsonDecode(response.body);
           final List results = jsonData['data']['results'];
 
-          print(results);
-          merchantSuggestions.value = results
-              .map<String>(
-                (item) => "${item['name_place']} - ${item['name_merchant']}",
-              )
+          merchantResults.value = results.map<Map<String, dynamic>>((item) {
+            return {
+              'id': item['id'], // id التاجر
+              'display':
+                  "${item['name_place']} - ${item['name_merchant']}", // الاسم المعروض
+            };
+          }).toList();
+          merchantSuggestions.value = merchantResults
+              .map<String>((item) => item['display']!)
               .toList();
         } else {
           merchantSuggestions.clear();
@@ -117,21 +131,35 @@ class FormReportController extends GetxController {
     });
   }
 
-  void submit(Map<String, dynamic>? productItem) async  {
+  void submit(Map<String, dynamic>? productItem) async {
+     if (!formKey.currentState!.validate()) {
+    // هنا يوقف ويرجع للمستخدم رسالة تنبيه
+    Get.defaultDialog(
+      title: "تنبيه",
+      middleText: "الرجاء التأكد من ملء جميع الحقول المطلوبة.",
+      textConfirm: "حسناً",
+      confirmTextColor: Colors.white,
+      onConfirm: () => Get.back(),
+    );
+    return;
+  }
     if (formKey.currentState!.validate()) {
-     final reportData = {
+      final reportData = {
         'name': nameController.text,
         'phone': phoneController.text,
         'type': reportType.value,
+        'name_merchant': nameStoreController.text,
+        'place_merchant': locationController.text,
         'content': contentController.text,
         "price": priceController.text.isEmpty
             ? null
             : double.tryParse(priceController.text),
-        'merchant': 1,
+        'merchant': null, // selectedMerchantId.value,  الأسم التجاري
         'product': productItem?['id'],
       };
-  try {
-        isSubmitting.value = true; // بدء التحميل
+      print(reportData);
+      try {
+        isSubmitting.value = true;
 
         final response = await http.post(
           Uri.parse("https://mclo.pythonanywhere.com/reports/reports/"),
@@ -140,24 +168,31 @@ class FormReportController extends GetxController {
         );
 
         if (response.statusCode == 201 || response.statusCode == 200) {
-          // نجاح
-         Get.snackbar(
-       ' reportData.name',
-        'تم إرسال البلاغ بنجاح!',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-          print("===== بيانات البلاغ =====");
-          print(reportData);
-          print("استجابة السيرفر: ${response.body}");
-          print("=========================");
-
-          // Get.back(result: reportData);
+          nameController.clear();
+          phoneController.clear();
+          merchantController.clear();
+          contentController.clear();
+          priceController.clear();
+          productNameController.clear();
+          nameStoreController.clear();
+          locationController.clear();
+          reportType.value = null;
+          selectedMerchantId.value = null;
+          Get.snackbar(
+            'شكرا لتعاونكم',
+            'تم إرسال البلاغ بنجاح!',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+          );
+          Future.delayed(const Duration(seconds: 4), () {
+            Get.offNamed('/home');
+          });
         } else {
-          // خطأ
-          print("خطأ ${response.statusCode}: ${response.body}");
+          final errorData = jsonDecode(response.body);
+
           Get.snackbar(
             'خطأ',
-            'فشل في إرسال البلاغ. حاول مرة أخرى.',
+            'فشل في إرسال ${errorData['errors']['merchant']}.',
             snackPosition: SnackPosition.BOTTOM,
             backgroundColor: Colors.red,
             colorText: Colors.white,
@@ -173,71 +208,8 @@ class FormReportController extends GetxController {
           colorText: Colors.white,
         );
       } finally {
-        isSubmitting.value = false; // إيقاف التحميل
+        isSubmitting.value = false;
       }
     }
-
-     
-
-       
-    }
   }
- 
-
-
-// void submit(Map<String, dynamic>? productItem)  {
- 
-
-    
-      // try {
-      //   isLoading.value = true;
-
-      //   final response = await http.post(
-      //     Uri.parse("https://mclo.pythonanywhere.com/reports/reports/"),
-      //     headers: {"Content-Type": "application/json"},
-      //     body: jsonEncode(reportData),
-      //   );
-
-      //   if (response.statusCode == 201 || response.statusCode == 200) {
-      //     // نجاح
-      //     Get.snackbar(
-      //       'نجاح',
-      //       'تم إرسال البلاغ بنجاح!',
-      //       snackPosition: SnackPosition.BOTTOM,
-      //       backgroundColor: Colors.green,
-      //       colorText: Colors.white,
-      //     );
-
-      //     print("===== بيانات البلاغ =====");
-      //     print(reportData);
-      //     print("استجابة السيرفر: ${response.body}");
-      //     print("=========================");
-
-      //     Get.back(result: reportData);
-      //   } else {
-      //     // خطأ
-      //     print("خطأ ${response.statusCode}: ${response.body}");
-      //     Get.snackbar(
-      //       'خطأ',
-      //       'فشل في إرسال البلاغ. حاول مرة أخرى.',
-      //       snackPosition: SnackPosition.BOTTOM,
-      //       backgroundColor: Colors.red,
-      //       colorText: Colors.white,
-      //     );
-      //   }
-      // } catch (e) {
-      //   print("خطأ أثناء الاتصال: $e");
-      //   Get.snackbar(
-      //     'خطأ',
-      //     'حدث خطأ في الاتصال بالسيرفر.',
-      //     snackPosition: SnackPosition.BOTTOM,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
-      // } finally {
-      //   isLoading.value = false;
-      // }
-  //   }
-
-  //   // العودة للشاشة السابقة
-  // }
+}

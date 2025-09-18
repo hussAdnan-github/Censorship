@@ -36,7 +36,7 @@ class ApiService {
   static Future<List<Advertisement>> fetchAdvertisement() async {
     final response = await http.get(Uri.parse(ApiEndpoints.advertisements));
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200) { 
       final Map<String, dynamic> jsonData = jsonDecode(response.body);
 
       final List results = jsonData['data']['results'];
@@ -47,18 +47,47 @@ class ApiService {
     }
   }
 
-  static Future<List<Offers>> fetchOffers() async {
-    final response = await http.get(Uri.parse(ApiEndpoints.offers));
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      final List results = jsonData['data']['results'];
-      print(results.map((e) => Offers.fromJson(e)).toList());
+  // static Future<List<Offers>> fetchOffers() async {
+  //   final response = await http.get(Uri.parse(ApiEndpoints.offers));
+  //   if (response.statusCode == 200) {
+  //     final Map<String, dynamic> jsonData = jsonDecode(response.body);
+  //     final List results = jsonData['data']['results'];
+   
+ 
+  //     return results.map((e) => Offers.fromJson(e)).toList();
+  //   } else {
+  //     throw Exception("فشل في جلب البيانات");
+  //   }
+  // }
 
-      return results.map((e) => Offers.fromJson(e)).toList();
+
+    static Future<PaginatedResponseGeneric<Offers>> fetchOffers({
+    int? page,
+  }) async {
+    final finalUrl = page == null
+        ? ApiEndpoints.offers
+        : '${ApiEndpoints.offers}?page=$page';
+    final response = await http.get(Uri.parse(finalUrl));
+
+    if (response.statusCode == 200) {
+      final decodedBody = json.decode(utf8.decode(response.bodyBytes));
+      final data = decodedBody['data'];
+
+      final List results = data['results'];
+      final List<Offers> offerssList = results
+          .map((item) => Offers.fromJson(item))
+          .toList();
+
+      final int? nextPage = data['next'];
+      return PaginatedResponseGeneric<Offers>(
+        items: offerssList,
+        nextPage: nextPage,
+      );
     } else {
-      throw Exception("فشل في جلب البيانات");
+      throw Exception('Failed to load merchants');
     }
   }
+
 
   static Future<PaginatedResponseGeneric<Bulletins>> fetchBulletins({
     int? page,

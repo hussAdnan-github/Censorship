@@ -16,7 +16,7 @@ class Bulletins {
       id: json['id'],
       name: json['name'] ?? 'بدون اسم',
       date: json['date'] ?? 'غير معروف',
-      file: json['file'] ?? 'غير محدد',
+      file: json['file'] ??'',
     );
   }
 }

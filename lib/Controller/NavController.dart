@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 
 class NavController extends GetxController {
   var selectedIndex = 0.obs;
+  var isFabPressed = false.obs;
 
   final List<Widget> screens = [
     Home(),

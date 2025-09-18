@@ -11,7 +11,7 @@ class Merchant {
     required this.namePlace,
     required this.nameDepartment,
     required this.nameMerchant,
-  }); 
+  });  
 
   factory Merchant.fromJson(Map<String, dynamic> json) {
     return Merchant(  

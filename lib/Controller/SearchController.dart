@@ -47,7 +47,7 @@ class SearchBarController extends GetxController {
       isLoading.value = true;
 
       bool internetAvailable = await hasInternetConnection();
-
+ 
       try {
         final url = Uri.parse(
           'https://mclo.pythonanywhere.com/bulletins/bulletins/?search=$query',

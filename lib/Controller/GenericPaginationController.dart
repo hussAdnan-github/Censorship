@@ -40,7 +40,8 @@ class GenericPaginationController<T> extends GetxController {
     super.onClose();
   }
 
-  void fetchInitial() async {
+  Future<void> fetchInitial() async {
+    print("object");
     try {
       isLoading(true);
       errorMessage('');

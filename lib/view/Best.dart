@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Controller/AdvertisementController.dart';
 import 'package:flutter_application_1/Controller/GenericPaginationController.dart';
+import 'package:flutter_application_1/Controller/NavController.dart';
+import 'package:flutter_application_1/Controller/UpdateController.dart';
 import 'package:flutter_application_1/Service/serviceApi.dart';
+import 'package:flutter_application_1/bulletin_repository.dart';
 import 'package:flutter_application_1/components/CardBest.dart';
 import 'package:flutter_application_1/model/Merchant.dart';
 import 'package:get/get.dart';
@@ -21,6 +24,9 @@ class Best extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Updatecontroller updateController = Get.put(Updatecontroller());
+            final navController = Get.find<NavController>();
+
     final merchantsController = Get.put(
       GenericPaginationController<Merchant>(
         fetchFunction: ({page}) => ApiService.fetchMerchants(page: page),
@@ -51,54 +57,266 @@ class Best extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.blue[50],
 
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF1976D2)),
-              child: Text(
-                'القائمة',
-                style: TextStyle(color: Colors.white, fontSize: 22),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('الرئيسية'),
-              onTap: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        ),
-      ),
-
       appBar: AppBar(
-        title: const Text(
-          'المحلات المميزة',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
+        actions: [
+          Builder(
+            builder: (BuildContext context) {
+              return IconButton(
+                icon: const Icon(Icons.menu, color: Colors.white, size: 34),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer();
+                  // إلغاء تركيز حقل البحث عند فتح القائمة الجانبية
+                },
+                tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+              );
+            },
           ),
-        ),
+        ],
+        automaticallyImplyLeading: false,
+        toolbarHeight: 70,
         backgroundColor: const Color(0xFF1976D2),
-        centerTitle: true,
         elevation: 0,
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu, color: Colors.white, size: 34),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-              tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-            );
+        shape: const RoundedRectangleBorder(
+         ),
+        title: Text(
+          "أفضـل أسـعار المـحـلات",
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_circle_left,
+            color: Colors.white,
+            size: 40,
+          ),
+
+         
+          onPressed: () {
+            // إذا المؤشر أكبر من 0، نرجع خطوة واحدة
+            if (navController.selectedIndex.value > 0) {
+              navController.changeIndex(navController.selectedIndex.value - 1);
+            }
           },
         ),
       ),
 
-      body: Column(
+      endDrawer: Drawer(
+        child: Directionality(
+          textDirection: TextDirection.rtl, // اجعل المحتوى من اليمين لليسار
+          child: Obx(() {
+            final results = updateController.updates;
+            return Column(
+              children: [
+                // المحتوى القابل للتمرير
+                Expanded(
+                  child: ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      DrawerHeader(
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1976D2),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            SizedBox(height: 16),
+                            Text(
+                              'مكتب وزارة الصناعة و التجارة بساحل حضرموت',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.home),
+                        title: const Text('الرئيسية'),
+                        onTap: () {
+                          final navController = Get.find<NavController>();
+                          navController.changeIndex(0);
+                        },
+                      ),
+                      ListTile(
+                        leading: const Icon(Icons.download),
+                        title: const Text('تحميل البيانات بدون انترنت'),
+                        onTap: () async {
+                          Navigator.of(context).pop();
+                          final repository = BulletinRepository();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('جاري تحميل البيانات...'),
+                            ),
+                          );
+                          try {
+                            final data = await repository.getBulletins();
+                            showDialog(
+                              context: context,
+                              builder: (context) {
+                                return Dialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                          size: 60,
+                                        ),
+                                        const SizedBox(height: 15),
+                                        const Text(
+                                          "تم الحفظ بنجاح 🎉",
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        const Text(
+                                          "يمكنك استخدام التطبيق حتى بدون انترنت 🌐❌",
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.blue,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text(
+                                            "حسناً",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          } catch (e) {
+                           showDialog(
+  context: context,
+  builder: (context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 70),
+            const SizedBox(height: 15),
+            const Text(
+              "حدث خطأ ❌",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "تأكد من تشغيل الإنترنت أو أعد المحاولة لاحقاً.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "حسناً",
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  },
+);
+
+                          }
+                        },
+                      ),
+                      if (results.isNotEmpty)
+                        ListTile(
+                          leading: const Icon(
+                            Icons.refresh,
+                            color: Colors.blue,
+                          ),
+                          title: const Text('تحديث التطبيق'),
+                          onTap: () async {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('جاري فتح الرابط...'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            final Uri url = Uri.parse(
+                              updateController.appUrl.value,
+                            );
+                            if (!await launchUrl(
+                              url,
+                              mode: LaunchMode.externalApplication,
+                            )) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تعذر فتح الرابط'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+
+                // 👇 الصورة مثبتة أسفل الـ Drawer
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(
+                      10,
+                    ), // 👈 هنا تحدد نصف القطر
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }),
+        ),
+      ),
+
+   
+   body: Column(
         children: [
           // سلايدر الإعلانات
           Container(
@@ -178,6 +396,14 @@ class Best extends StatelessWidget {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      if (ad.web != null && ad.web.isNotEmpty)
+                                        _buildSocialIcon(
+                                          color: Colors.blue, // لون مميز للويب
+                                          icon: FontAwesomeIcons
+                                              .globe, // أيقونة الإنترنت / المتصفح
+                                          url: ad.web,
+                                        ),
+                                      const SizedBox(width: 15),
                                       if (ad.whatsapp != null &&
                                           ad.whatsapp.isNotEmpty)
                                         _buildSocialIcon(
@@ -251,6 +477,7 @@ class Best extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (advertisements.isLoading.value) {
+               
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -288,6 +515,7 @@ class Best extends StatelessWidget {
                     ],
                   ),
                 );
+             
               }
               if (advertisements.errorMessage.isNotEmpty) {
                 return Center(
@@ -325,27 +553,32 @@ class Best extends StatelessWidget {
                 return const Center(child: Text("لا توجد بيانات"));
               }
 
-              return ListView.builder(
-                controller: merchantsController.scrollController,
-                itemCount:
-                    merchantsController.items.length +
-                    (merchantsController.hasMore.value ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == merchantsController.items.length) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(child: CircularProgressIndicator()),
+              return RefreshIndicator(
+                   onRefresh: () async {
+          await merchantsController.fetchInitial(); // تحديث البيانات عند السحب
+        },
+                child: ListView.builder(
+                  controller: merchantsController.scrollController,
+                  itemCount:
+                      merchantsController.items.length +
+                      (merchantsController.hasMore.value ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == merchantsController.items.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                
+                    final merchant = merchantsController.items[index];
+                    return Cardbest(
+                      image: merchant.image,
+                      namePlace: merchant.namePlace,
+                      nameDepartment: merchant.nameDepartment,
+                      nameMerchant: merchant.nameMerchant,
                     );
-                  }
-
-                  final merchant = merchantsController.items[index];
-                  return Cardbest(
-                    image: merchant.image,
-                    namePlace: merchant.namePlace,
-                    nameDepartment: merchant.nameDepartment,
-                    nameMerchant: merchant.nameMerchant,
-                  );
-                },
+                  },
+                ),
               );
             }),
           ),
